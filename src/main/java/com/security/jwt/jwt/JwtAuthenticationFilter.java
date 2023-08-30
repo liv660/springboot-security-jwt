@@ -1,5 +1,7 @@
 package com.security.jwt.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.security.jwt.auth.PrincipalDetails;
 import com.security.jwt.model.User;
@@ -14,6 +16,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -59,6 +64,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         System.out.println("successfulAuthentication is called");
 
-        super.successfulAuthentication(request, response, chain, authResult);
+        PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
+
+
+        //hash 암호 방식
+        String jwtToken = JWT.create()
+                .withSubject("Token Name")
+                .withExpiresAt(new Date(System.currentTimeMillis() + (60_000 * 10)))
+                .withClaim("id", principalDetails.getUser().getId())
+                .withClaim("username", principalDetails.getUser().getUsername())
+                .sign(Algorithm.HMAC512("helloworld"));
+
+        response.addHeader("Authorization", "Bearer " + jwtToken);
     }
 }
