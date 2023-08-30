@@ -2,6 +2,9 @@ package com.security.jwt.config;
 
  import com.security.jwt.filter.MyFilter3;
  import com.security.jwt.jwt.JwtAuthenticationFilter;
+ import com.security.jwt.jwt.JwtAuthorizationFilter;
+ import com.security.jwt.respository.UserRepository;
+ import lombok.RequiredArgsConstructor;
  import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
  import org.springframework.security.authentication.AuthenticationManager;
@@ -16,7 +19,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final UserRepository userRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,6 +40,12 @@ public class SecurityConfig {
                                         http.getSharedObject(AuthenticationConfiguration.class)
                                 )
                         ))
+                .addFilter(// 토큰 유효 검사
+                        new JwtAuthorizationFilter((
+                                authenticationManager(
+                                        http.getSharedObject(AuthenticationConfiguration.class)
+                                )
+                        ), userRepository))
                 .authorizeRequests()
                 .antMatchers("/api/v1/user/**").access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
                 .antMatchers("/api/v1/manager/**").access("hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
